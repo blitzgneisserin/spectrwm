@@ -4789,17 +4789,20 @@ focus_win_input(struct ws_win *win, bool force_input)
 		    "PointerRoot, time: %#x\n", win->id, last_event_time);
 		xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, win->id,
 		    (force_input ? XCB_CURRENT_TIME : last_event_time));
-	} else if (!win->take_focus) {
-		if (win->ws && win->ws->r) {
+	} else if (win->take_focus) {
+		/* Focus on frame */
+		if (win->frame) {
 			DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
-			    "PointerRoot, time: CurrentTime\n", win->ws->r->id);
+			    "PointerRoot, time: %#x\n", win->frame,
+			    last_event_time);
 			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT,
-			    win->ws->r->id, XCB_CURRENT_TIME);
+			    win->frame, last_event_time);
 		} else {
 			DNPRINTF(SWM_D_FOCUS, "SetInputFocus: PointerRoot, "
-			    "revert-to: PointerRoot, time: CurrentTime\n");
+			    "revert-to: PointerRoot, time: %#x\n",
+			    last_event_time);
 			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT,
-			    XCB_INPUT_FOCUS_POINTER_ROOT, XCB_CURRENT_TIME);
+			    XCB_INPUT_FOCUS_POINTER_ROOT, last_event_time);
 		}
 	}
 
@@ -5011,9 +5014,9 @@ focus_region(struct swm_region *r)
 		}
 
 		DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
-		    "PointerRoot,time: CurrentTime\n", r->id);
+		    "PointerRoot, time: %#x\n", r->id, last_event_time);
 		xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, r->id,
-		    XCB_CURRENT_TIME);
+		    last_event_time);
 	}
 }
 
@@ -5122,9 +5125,9 @@ switchws(struct binding *bp, struct swm_region *r, union arg *args)
 	/* Clear bar and set focus on region input win if new ws is empty. */
 	if (new_ws->focus_pending == NULL && new_ws->focus == NULL) {
 		DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
-		    "PointerRoot, time: CurrentTime\n", r->id);
+		    "PointerRoot, time: %#x\n", r->id, last_event_time);
 		xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, r->id,
-		    XCB_CURRENT_TIME);
+		    last_event_time);
 		bar_draw(r->bar);
 	}
 
@@ -6674,9 +6677,9 @@ send_to_ws(struct binding *bp, struct swm_region *r, union arg *args)
 			focus_win(r->ws->focus);
 		} else {
 			DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
-			    "PointerRoot, time: CurrentTime\n", r->id);
+			    "PointerRoot, time: %#x\n", r->id, last_event_time);
 			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT,
-			    r->id, XCB_CURRENT_TIME);
+			    r->id, last_event_time);
 			bar_draw(r->bar);
 		}
 	}
@@ -11673,7 +11676,7 @@ buttonpress(xcb_button_press_event_t *e)
 				    r->id, last_event_time);
 				xcb_set_input_focus(conn,
 				    XCB_INPUT_FOCUS_POINTER_ROOT, r->id,
-				    XCB_CURRENT_TIME);
+				    last_event_time);
 				bar_draw(r->bar);
 
 				/* Don't replay root window events. */
@@ -12011,9 +12014,10 @@ destroynotify(xcb_destroy_notify_event_t *e)
 			ws->focus_pending = NULL;
 		} else if (ws->focus == NULL) {
 			DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
-			    "PointerRoot, time: CurrentTime\n", ws->r->id);
+			    "PointerRoot, time: %#x\n", ws->r->id,
+			    last_event_time);
 			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT,
-			    ws->r->id, XCB_CURRENT_TIME);
+			    ws->r->id, last_event_time);
 		}
 
 		focus_flush();
@@ -12636,7 +12640,7 @@ unmapnotify(xcb_unmap_notify_event_t *e)
 		DNPRINTF(SWM_D_FOCUS, "SetInputFocus: %#x, revert-to: "
 		    "PointerRoot, time: CurrentTime\n", ws->r->id);
 		xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT,
-		    ws->r->id, XCB_CURRENT_TIME);
+		    ws->r->id, last_event_time);
 		bar_draw(ws->r->bar);
 	}
 
